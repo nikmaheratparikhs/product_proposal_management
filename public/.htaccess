@@ -1,0 +1,17 @@
+# Public Directory Configuration
+
+# Prevent directory listing
+Options -Indexes
+
+# Allow PHP files
+<FilesMatch "\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Protect sensitive files
+<FilesMatch "^(\.htaccess|\.env|composer\.(json|lock))$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
