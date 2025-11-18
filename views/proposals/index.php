@@ -48,6 +48,18 @@ include __DIR__ . '/../layout/header.php';
                                    class="btn btn-info" title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <?php if ($isAdmin): ?>
+                                <a href="<?php echo BASE_URL; ?>index.php?action=proposal_edit&id=<?php echo $proposal['id']; ?>" 
+                                   class="btn btn-warning" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="<?php echo BASE_URL; ?>index.php?action=proposal_delete&id=<?php echo $proposal['id']; ?>&csrf_token=<?php echo generateCSRFToken(); ?>" 
+                                   class="btn btn-danger" 
+                                   title="Delete"
+                                   onclick="return confirm('Are you sure you want to delete this proposal? This action cannot be undone.');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                <?php endif; ?>
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
                                         <i class="bi bi-download"></i> Export

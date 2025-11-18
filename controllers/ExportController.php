@@ -58,44 +58,49 @@ class ExportController {
         
         $row = 1;
         
-        // Logo and header
+        // Row 1: Date on the right side
+        $sheet->setCellValue('J' . $row, date('Y-m-d', strtotime($proposal['created_at'])));
+        $sheet->getStyle('J' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('J' . $row)->getFont()->setBold(true);
+        $row++;
+        
+        // Row 2: Logo in center
         if (!empty($proposal['settings']['company_logo'])) {
             $logoPath = BASE_PATH . '/public/' . $proposal['settings']['company_logo'];
             if (file_exists($logoPath)) {
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
                 $drawing->setPath($logoPath);
-                $drawing->setHeight(50);
-                $drawing->setCoordinates('A1');
+                $drawing->setHeight(60);
+                $drawing->setWidth(200);
+                // Center the logo (approximately column E-F area)
+                $drawing->setCoordinates('E' . $row);
+                $drawing->setOffsetX(50);
                 $drawing->setWorksheet($sheet);
-                $row = 3;
             }
         }
+        $row++;
         
-        // Title
+        // Row 3: Title
         $sheet->setCellValue('A' . $row, 'PRODUCT PROPOSAL');
         $sheet->mergeCells('A' . $row . ':J' . $row);
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(18);
         $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $row++;
         
-        // Event name
-        if (!empty($proposal['event_name'])) {
-            $sheet->setCellValue('A' . $row, 'Event: ' . $proposal['event_name']);
-            $sheet->mergeCells('A' . $row . ':J' . $row);
-            $row++;
+        // Add event and customer info if available (optional rows)
+        if (!empty($proposal['event_name']) || !empty($proposal['customer_name'])) {
+            if (!empty($proposal['event_name'])) {
+                $sheet->setCellValue('A' . $row, 'Event: ' . $proposal['event_name']);
+                $sheet->mergeCells('A' . $row . ':J' . $row);
+                $row++;
+            }
+            if (!empty($proposal['customer_name'])) {
+                $sheet->setCellValue('A' . $row, 'Customer: ' . $proposal['customer_name']);
+                $sheet->mergeCells('A' . $row . ':J' . $row);
+                $row++;
+            }
+            $row++; // Add spacing
         }
-        
-        // Customer name
-        if (!empty($proposal['customer_name'])) {
-            $sheet->setCellValue('A' . $row, 'Customer: ' . $proposal['customer_name']);
-            $sheet->mergeCells('A' . $row . ':J' . $row);
-            $row++;
-        }
-        
-        // Date
-        $sheet->setCellValue('A' . $row, 'Date: ' . date('Y-m-d', strtotime($proposal['created_at'])));
-        $sheet->mergeCells('A' . $row . ':J' . $row);
-        $row += 2;
         
         // Table header
         $headers = ['SR No', 'Image', 'SKU', 'Description', 'Unit Price', 'Landing Cost', 'Margin %', 'Final Price', 'Quantity', 'Total'];
@@ -219,27 +224,33 @@ class ExportController {
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
         
-        // Logo
+        // Row 1: Date on the right
+        $section->addText(date('Y-m-d', strtotime($proposal['created_at'])), ['bold' => true], ['alignment' => 'right']);
+        $section->addTextBreak(1);
+        
+        // Row 2: Logo in center
         if (!empty($proposal['settings']['company_logo'])) {
             $logoPath = BASE_PATH . '/public/' . $proposal['settings']['company_logo'];
             if (file_exists($logoPath)) {
-                $section->addImage($logoPath, ['width' => 150, 'height' => 50]);
+                $section->addImage($logoPath, ['width' => 200, 'height' => 60], ['alignment' => 'center']);
             }
         }
-        
-        // Title
-        $section->addText('PRODUCT PROPOSAL', ['bold' => true, 'size' => 16], ['alignment' => 'center']);
         $section->addTextBreak(1);
         
-        // Event and customer info
-        if (!empty($proposal['event_name'])) {
-            $section->addText('Event: ' . $proposal['event_name']);
-        }
-        if (!empty($proposal['customer_name'])) {
-            $section->addText('Customer: ' . $proposal['customer_name']);
-        }
-        $section->addText('Date: ' . date('Y-m-d', strtotime($proposal['created_at'])));
+        // Row 3: Title
+        $section->addText('PRODUCT PROPOSAL', ['bold' => true, 'size' => 18], ['alignment' => 'center']);
         $section->addTextBreak(1);
+        
+        // Optional: Event and customer info
+        if (!empty($proposal['event_name']) || !empty($proposal['customer_name'])) {
+            if (!empty($proposal['event_name'])) {
+                $section->addText('Event: ' . $proposal['event_name']);
+            }
+            if (!empty($proposal['customer_name'])) {
+                $section->addText('Customer: ' . $proposal['customer_name']);
+            }
+            $section->addTextBreak(1);
+        }
         
         // Table
         $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000']);
@@ -325,49 +336,68 @@ class ExportController {
         $phpPresentation = new PhpPresentation();
         $slide = $phpPresentation->createSlide();
         
-        // Title
-        $shape = $slide->createRichTextShape()
-            ->setHeight(50)
-            ->setWidth(900)
-            ->setOffsetX(10)
-            ->setOffsetY(10);
-        $shape->getActiveParagraph()->getAlignment()->setHorizontal(PresAlignment::HORIZONTAL_CENTER);
-        $textRun = $shape->createTextRun('PRODUCT PROPOSAL');
-        $textRun->getFont()->setBold(true)->setSize(24);
-        
-        // Event and customer info
-        $yPos = 70;
-        if (!empty($proposal['event_name'])) {
-            $shape = $slide->createRichTextShape()
-                ->setHeight(20)
-                ->setWidth(900)
-                ->setOffsetX(10)
-                ->setOffsetY($yPos);
-            $shape->createTextRun('Event: ' . $proposal['event_name']);
-            $yPos += 25;
-        }
-        
-        if (!empty($proposal['customer_name'])) {
-            $shape = $slide->createRichTextShape()
-                ->setHeight(20)
-                ->setWidth(900)
-                ->setOffsetX(10)
-                ->setOffsetY($yPos);
-            $shape->createTextRun('Customer: ' . $proposal['customer_name']);
-            $yPos += 25;
-        }
-        
+        // Row 1: Date on the right
         $shape = $slide->createRichTextShape()
             ->setHeight(20)
+            ->setWidth(200)
+            ->setOffsetX(710)
+            ->setOffsetY(10);
+        $shape->getActiveParagraph()->getAlignment()->setHorizontal(PresAlignment::HORIZONTAL_RIGHT);
+        $textRun = $shape->createTextRun(date('Y-m-d', strtotime($proposal['created_at'])));
+        $textRun->getFont()->setBold(true)->setSize(12);
+        
+        // Row 2: Logo in center
+        $yPos = 35;
+        if (!empty($proposal['settings']['company_logo'])) {
+            $logoPath = BASE_PATH . '/public/' . $proposal['settings']['company_logo'];
+            if (file_exists($logoPath)) {
+                $shape = $slide->createDrawingShape();
+                $shape->setPath($logoPath)
+                    ->setHeight(60)
+                    ->setWidth(200)
+                    ->setOffsetX(355)  // Center: (960 - 200) / 2
+                    ->setOffsetY($yPos);
+            }
+        }
+        $yPos += 80;
+        
+        // Row 3: Title
+        $shape = $slide->createRichTextShape()
+            ->setHeight(40)
             ->setWidth(900)
             ->setOffsetX(10)
             ->setOffsetY($yPos);
-        $shape->createTextRun('Date: ' . date('Y-m-d', strtotime($proposal['created_at'])));
-        $yPos += 40;
+        $shape->getActiveParagraph()->getAlignment()->setHorizontal(PresAlignment::HORIZONTAL_CENTER);
+        $textRun = $shape->createTextRun('PRODUCT PROPOSAL');
+        $textRun->getFont()->setBold(true)->setSize(24);
+        $yPos += 50;
         
-        // Table header
-        $headers = ['SKU', 'Description', 'Unit Price', 'Landing Cost', 'Margin %', 'Final Price', 'Qty', 'Total'];
-        $colWidth = 110;
+        // Optional: Event and customer info
+        if (!empty($proposal['event_name']) || !empty($proposal['customer_name'])) {
+            if (!empty($proposal['event_name'])) {
+                $shape = $slide->createRichTextShape()
+                    ->setHeight(20)
+                    ->setWidth(900)
+                    ->setOffsetX(10)
+                    ->setOffsetY($yPos);
+                $shape->createTextRun('Event: ' . $proposal['event_name']);
+                $yPos += 25;
+            }
+            if (!empty($proposal['customer_name'])) {
+                $shape = $slide->createRichTextShape()
+                    ->setHeight(20)
+                    ->setWidth(900)
+                    ->setOffsetX(10)
+                    ->setOffsetY($yPos);
+                $shape->createTextRun('Customer: ' . $proposal['customer_name']);
+                $yPos += 25;
+            }
+            $yPos += 15;
+        }
+        
+        // Row 4: Table header
+        $headers = ['SR', 'Img', 'SKU', 'Desc', 'Unit $', 'Land $', 'M%', 'Final $', 'Qty', 'Total'];
+        $colWidth = 85;
         $xPos = 10;
         
         foreach ($headers as $header) {
@@ -379,19 +409,23 @@ class ExportController {
             $shape->getFill()->setFillType(PresFill::FILL_SOLID)
                 ->setStartColor(new Color('E0E0E0'));
             $textRun = $shape->createTextRun($header);
-            $textRun->getFont()->setBold(true)->setSize(10);
+            $textRun->getFont()->setBold(true)->setSize(9);
             $xPos += $colWidth;
         }
         
         $yPos += 35;
         
-        // Table data
+        // Table data (rest of rows)
         $grandTotal = 0;
+        $srNo = 1;
         foreach ($proposal['items'] as $item) {
             $xPos = 10;
+            $imageUrl = !empty($item['image_url']) ? 'Yes' : 'No';
             $data = [
+                $srNo,
+                $imageUrl,
                 $item['sku'],
-                substr($item['description'], 0, 20),
+                substr($item['description'], 0, 15),
                 formatCurrency($item['unit_price']),
                 formatCurrency($item['landing_cost']),
                 formatPercentage($item['custom_margin'] ?? $item['margin_percentage']),
@@ -399,6 +433,7 @@ class ExportController {
                 $item['quantity'],
                 formatCurrency($item['final_price'] * $item['quantity'])
             ];
+            $srNo++;
             
             foreach ($data as $cellData) {
                 $shape = $slide->createRichTextShape()
@@ -417,13 +452,23 @@ class ExportController {
         // Grand total
         $shape = $slide->createRichTextShape()
             ->setHeight(30)
-            ->setWidth(770)
+            ->setWidth(765)
             ->setOffsetX(10)
             ->setOffsetY($yPos);
         $shape->getFill()->setFillType(PresFill::FILL_SOLID)
             ->setStartColor(new Color('E0E0E0'));
-        $textRun = $shape->createTextRun('GRAND TOTAL: ' . formatCurrency($grandTotal));
+        $textRun = $shape->createTextRun('GRAND TOTAL:');
         $textRun->getFont()->setBold(true);
+        
+        $shape2 = $slide->createRichTextShape()
+            ->setHeight(30)
+            ->setWidth($colWidth)
+            ->setOffsetX(775)
+            ->setOffsetY($yPos);
+        $shape2->getFill()->setFillType(PresFill::FILL_SOLID)
+            ->setStartColor(new Color('E0E0E0'));
+        $textRun2 = $shape2->createTextRun(formatCurrency($grandTotal));
+        $textRun2->getFont()->setBold(true);
         
         // Notes
         if (!empty($proposal['notes'])) {

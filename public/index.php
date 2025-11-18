@@ -77,6 +77,11 @@ switch ($action) {
         $controller->delete();
         break;
         
+    case 'bulk_delete_products':
+        $controller = new ProductController();
+        $controller->bulkDelete();
+        break;
+        
     // Import
     case 'import':
         $controller = new ImportController();
@@ -132,6 +137,36 @@ switch ($action) {
     case 'proposal_view':
         $controller = new ProposalController();
         $controller->view();
+        break;
+        
+    case 'proposal_edit':
+        $controller = new ProposalController();
+        $controller->edit();
+        break;
+        
+    case 'proposal_update':
+        $controller = new ProposalController();
+        $controller->update();
+        break;
+        
+    case 'proposal_delete':
+        $controller = new ProposalController();
+        $controller->delete();
+        break;
+        
+    case 'proposal_add_product':
+        $controller = new ProposalController();
+        $controller->addProduct();
+        break;
+        
+    case 'proposal_remove_product':
+        $controller = new ProposalController();
+        $controller->removeProduct();
+        break;
+        
+    case 'proposal_update_item':
+        $controller = new ProposalController();
+        $controller->updateItem();
         break;
         
     // Export

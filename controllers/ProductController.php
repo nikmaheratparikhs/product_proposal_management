@@ -294,5 +294,51 @@ class ProductController {
         $stmt->close();
         redirect(BASE_URL . 'index.php?action=products');
     }
+    
+    /**
+     * Bulk delete products
+     */
+    public function bulkDelete() {
+        requireAdmin();
+        startSession();
+        
+        // Verify CSRF token
+        if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+            setFlashMessage('Invalid security token. Please try again.', FLASH_ERROR);
+            redirect(BASE_URL . 'index.php?action=products');
+        }
+        
+        $productIds = $_POST['product_ids'] ?? '';
+        
+        if (empty($productIds)) {
+            setFlashMessage('Please select at least one product to delete.', FLASH_ERROR);
+            redirect(BASE_URL . 'index.php?action=products');
+        }
+        
+        // Parse product IDs
+        $ids = array_filter(array_map('intval', explode(',', $productIds)));
+        
+        if (empty($ids)) {
+            setFlashMessage('Invalid product selection.', FLASH_ERROR);
+            redirect(BASE_URL . 'index.php?action=products');
+        }
+        
+        $conn = getDBConnection();
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM products WHERE id IN ($placeholders)");
+        
+        $types = str_repeat('i', count($ids));
+        $stmt->bind_param($types, ...$ids);
+        
+        if ($stmt->execute()) {
+            $deletedCount = $stmt->affected_rows;
+            setFlashMessage($deletedCount . ' product(s) deleted successfully.', FLASH_SUCCESS);
+        } else {
+            setFlashMessage('Error deleting products: ' . $conn->error, FLASH_ERROR);
+        }
+        
+        $stmt->close();
+        redirect(BASE_URL . 'index.php?action=products');
+    }
 }
 

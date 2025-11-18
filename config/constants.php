@@ -6,7 +6,7 @@
 // Application settings
 define('APP_NAME', 'Product Proposal Management Portal');
 define('APP_VERSION', '1.0.0');
-define('BASE_URL', 'http://localhost/product_proposal_management/public/');
+define('BASE_URL', 'https://polyvalent-rosalie-unflavoured.ngrok-free.app/product_proposal_management/public/');
 
 // Define BASE_PATH only if not already defined
 if (!defined('BASE_PATH')) {

@@ -103,13 +103,24 @@ include __DIR__ . '/../layout/header.php';
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Products List</h5>
-        <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=add_multiple_to_cart" id="bulkAddForm" style="display: inline;">
-            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-            <input type="hidden" name="product_ids" id="selected_product_ids">
-            <button type="submit" class="btn btn-success btn-sm" id="bulkAddBtn" disabled>
-                <i class="bi bi-cart-plus"></i> Add Selected to Proposal (<span id="selected_count">0</span>)
-            </button>
-        </form>
+        <div class="btn-group">
+            <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=add_multiple_to_cart" id="bulkAddForm" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                <input type="hidden" name="product_ids" id="selected_product_ids">
+                <button type="submit" class="btn btn-success btn-sm" id="bulkAddBtn" disabled>
+                    <i class="bi bi-cart-plus"></i> Add Selected to Proposal (<span id="selected_count">0</span>)
+                </button>
+            </form>
+            <?php if (isAdmin()): ?>
+            <form method="POST" action="<?php echo BASE_URL; ?>index.php?action=bulk_delete_products" id="bulkDeleteForm" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                <input type="hidden" name="product_ids" id="delete_product_ids">
+                <button type="submit" class="btn btn-danger btn-sm" id="bulkDeleteBtn" disabled onclick="return confirm('Are you sure you want to delete the selected products? This action cannot be undone.');">
+                    <i class="bi bi-trash"></i> Delete Selected (<span id="delete_count">0</span>)
+                </button>
+            </form>
+            <?php endif; ?>
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -260,6 +271,13 @@ function updateSelectedCount() {
     // Update hidden input with selected IDs
     const selectedIds = Array.from(checkboxes).map(cb => cb.value);
     document.getElementById('selected_product_ids').value = selectedIds.join(',');
+    
+    // Update delete button
+    <?php if (isAdmin()): ?>
+    document.getElementById('delete_count').textContent = count;
+    document.getElementById('bulkDeleteBtn').disabled = count === 0;
+    document.getElementById('delete_product_ids').value = selectedIds.join(',');
+    <?php endif; ?>
 }
 </script>
 
